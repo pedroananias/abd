@@ -6,8 +6,7 @@ WORKDIR /src
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends git \
-    && apt-get purge -y --auto-remove \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get purge -y --auto-remove
 
 COPY CHANGELOG LICENSE README.md batch.sh setup.py ./
 COPY src src
