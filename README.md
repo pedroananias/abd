@@ -4,14 +4,22 @@ Module responsable for detecting anomalies in case studies of algal bloom occure
 
 
 
-### Dependencies
+## Dependencies
 
-- Python 3.7.7 64-bit ou superior
-- Modules: oauth2client earthengine-api matplotlib pandas numpy requests pillow natsort geojson argparse logging joblib
+- Python >= 3.7.7 64-bit, <= 3.9.14 64-bit
+- Google Earth Engine enabled account: see https://earthengine.google.com/
 
 
+## Instalation
 
-### Attention, before running:
+To install this script and all its dependencies, execute the follow commands:
+
+1) Create a virtual environment: `python3 -m venv venv`
+2) Enable it: `source venv/bin/activate`
+2) Install the script dependencies: `pip install -e .`
+
+
+## Attention, before running this script:
 
 Before running the script and after installing the libraries, you must authenticate with the Google Earth Engine API using the following command:
 
@@ -19,18 +27,60 @@ Before running the script and after installing the libraries, you must authentic
 earthengine authenticate
 ```
 
+In some versions of macOS, it might be necessary to run this command using sudo.
+
+## Command line tool
+
+This module brings a default command line `adb` for you. To see available parameters, please run:
+
+```bash
+> abd --help
+Usage: abd [OPTIONS]
+
+Options:
+  --lat_lon TEXT            Two diagnal points (Latitude 1, Longitude 1,
+                            Latitude 2, Longitude 2) of the study area
+  --dates TEXT              Comma-separated date to be applied the algorithm
+  --name TEXT               Place where to save generated files
+  --days_threshold INTEGER  Days threshold used to build the timeseries and
+                            training set: 90, 180 ou 365
+  --model TEXT              Select the desired model: ocsvm, rf, if or None
+                            for all
+  --sensor TEXT             Define the selected sensor where images will be
+                            downloaded from: landsat, sentinel, modis
+  --save_collection TEXT    Save collection images (tiff and png)
+  --save_train TEXT         Enable saving the training dataset (csv)
+  --force_cache TEXT        Force cache resetting to prevent image errors
+  --attributes TEXT         Define the attributes used in the modelling
+                            process
+  --outliers_zscore FLOAT   Define the Z-Score used in the median outlier
+                            removal threshold
+  --attribute_doy TEXT      Define if the doy attribute will be used in the
+                            modelling process
+  --roi TEXT                Select the GEE roi version used in the validation
+                            process. E.g. users/pedroananias/roi
+  --cloud_threshold TEXT    Allow CLOUD threshold customization by user
+  --help                    Show this message and exit.
+
+```
 
 
-### How to execute the default script?
+## How to execute the default script?
 
-python /path/to/abd/script.py --lat_lon=-83.50124371805877,41.88435023280987,-83.07548096199702,41.65275061592091 --dates=2019-06-03 --name=erie --model=ocsvm --sensor=modis
+```bash
+abd --lat_lon=-83.50124371805877,41.88435023280987,-83.07548096199702,41.65275061592091 --dates=2019-06-03 --name=erie --model=ocsvm --sensor=modis
+```
 
 
 
 
-### What are the results?
+## What are the results?
 
-The script will detect the occurrence of anomalies with a case study of algae blooming in the inserted study area and selected date. Therefore, a folder located in 'data' is created and named based on the date and version of the script executed. Example: /path/to/abd/data/20201122_123014[v=V26-erie,d=2019-06-03,t=180,m=ocsvm,s=modis].
+The script will detect the occurrence of anomalies with a case study of algae blooming in the inserted study area and selected date. Therefore, a folder located in `output` is created and named based on the date and version of the script executed. Example: 
+
+```bash
+/path/to/abd/output/20201122_123014[v=v0.26.0-erie,d=2019-06-03,t=180,m=ocsvm,s=modis]
+```
 
 The following results are generated:
 
@@ -48,63 +98,10 @@ When using the 'save_collection' function, if the script can not save images loc
 
 
 
-### Example
+## Sandbox example
 
-```
-# Import
-import ee
-from modules import abd
+This script comes with a Jupyter Notebook sandbox example file. To open it, please run the command below inside the script's root directory:
 
-# Initialize Google Earth Engine
-ee.Initialize()
-
-# folder where to save results
-folder = "/path/to/desired/folder"
-
-# create algorithm object
-algorithm = abd.Abd(lat_lon="-83.50124371805877,41.88435023280987,-83.07548096199702,41.65275061592091,
-                    date="2019-06-03",
-                    days_threshold=180,
-                    model="ocsvm",
-                    sensor="modis")
-
-# creating timeseries based on days_thresholds
-algorithm.process_timeseries_data()
-
-# creating train and grid datasets
-algorithm.process_training_data(df=algorithm.df_timeseries)
-
-# start training process
-algorithm.train()
-
-# apply detection algorithm
-algorithm.detect()
-
-# validate using ROI - example (https://code.earthengine.google.com/)
-algorithm.validate_using_roi(path='users/gee-user-name/erie', rois=['2019-06-03_modis_regular', '2019-06-03_modis_anomaly'], labels=[0, 1])
-
-# save geojson
-algorithm.save_geojsons(folder=folder+"/geojson")
-
-# save results
-algorithm.save_dataset(df=algorithm.df_results, path=folder+'/results.csv')
-
-# save collection images
-algorithm.save_timeseries_plot(df=algorithm.df_timeseries, path=folder+'/timeseries.png')
-if isinstance(algorithm.df_image, pd.DataFrame) and not algorithm.df_image.empty:
-    algorithm.save_detection_plot(path=folder+'/detection.png')
-    algorithm.save_image_png(image=algorithm.image_clip, date=dt.strptime(date, "%Y-%m-%d"), path=folder+"/"+date+".png")
-    algorithm.save_image_tiff(image=algorithm.image_clip, date=dt.strptime(date, "%Y-%m-%d"), path=folder+"/"+date+".zip", folderName=args.name)
-    
-# save collection images (tiff and png)
-if args.save_collection:
-    algorithm.save_collection_tiff(folder=folder+"/tiff", folderName="abd_erie.tiff")
-    algorithm.save_collection_png(folder=folder+"/png")
-
-# save preprocessing results
-if args.save_train:
-    algorithm.save_dataset(df=algorithm.df_timeseries, path=folder+'/timeseries.csv')
-    algorithm.save_dataset(df=algorithm.df_train, path=folder+'/df_train.csv')
-    algorithm.save_dataset(df=algorithm.df_gridsearch, path=folder+'/df_gridsearch.csv')
-    algorithm.save_dataset(df=algorithm.df_image, path=folder+'/df_image.csv')
+```bash
+jupyter lab
 ```

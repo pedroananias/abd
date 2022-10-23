@@ -6,7 +6,6 @@ BASEDIR="$( cd "$( dirname "$0" )" && pwd )"
 # ARGUMENTS GENERAL
 PYTHON=${1:-"python"}
 SCRIPT="script.py"
-CLEAR="sudo pkill -f /home/pedro/anaconda3"
 
 # SHOW BASE DIR
 echo "$PYTHON $BASEDIR/$SCRIPT"
