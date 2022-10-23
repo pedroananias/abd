@@ -7,11 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 - Vertex AI Pipeline implementation
 
-## [0.27.0] - 2017-06-20
+## [0.27.0] - 2022-10-23
 ### Added
 - Command line tool for running detections
 - Versioning control (tags, setup.py, version.py)
 - Black formatting
+- Docker image
 
 ### Fixed
 - Python package structure best practices
