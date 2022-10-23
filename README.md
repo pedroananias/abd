@@ -21,10 +21,18 @@ To install this script and all its dependencies, execute the follow commands:
 
 ## Attention, before running this script:
 
-Before running the script and after installing the libraries, you must authenticate with the Google Earth Engine API using the following command:
+Before running the script and after installing the libraries, you must authenticate with the Google Earth Engine API using the ONE of the following commands:
 
-```
+```bash
+# from local command line
 earthengine authenticate
+
+# from inside Docker container
+earthengine authenticate --auth_mode=notebook
+
+# from inside Jupyter Notebook
+import ee
+ee.Authenticate()
 ```
 
 In some versions of macOS, it might be necessary to run this command using `sudo`.

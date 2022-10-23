@@ -6,14 +6,19 @@ WORKDIR /src
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends git \
-    && apt-get install -y gcc \
-    && apt-get purge -y --auto-remove \
+    && apt-get install -y gcc python3-dev \
+    && apt-get install -y curl \
+    && apt-get purge -y --auto-remove
 
-COPY CHANGELOG.md README.md LICENSE batch.sh setup.py ./
+RUN curl https://sdk.cloud.google.com > install.sh \
+    && bash install.sh --disable-prompts
+
+ENV PATH $PATH:/root/google-cloud-sdk/bin
+
+COPY CHANGELOG.md LICENSE README.md batch.sh setup.py ./
 COPY src src
 
 RUN pip install --upgrade pip && \
     pip install -e '.'
 
 ENTRYPOINT ["/bin/bash"]
-CMD ["abd", "--help"]
