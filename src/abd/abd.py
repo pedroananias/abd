@@ -1041,8 +1041,8 @@ class Abd:
             attributes_median = [a + "_median" for a in attributes]
 
             # check timeseries is already on cache
-            cache_files = self.get_cache_files(date=self.date)
             try:
+                cache_files = self.get_cache_files(date=self.date)
 
                 # warning
                 print("Trying to extract it from the cache...")

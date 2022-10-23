@@ -14,4 +14,5 @@ COPY src src
 RUN pip install --upgrade pip && \
     pip install -e '.'
 
-ENTRYPOINT ["abd", "--help"]
+ENTRYPOINT ["/bin/bash"]
+CMD ["abd", "--help"]
