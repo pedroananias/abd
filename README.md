@@ -6,7 +6,7 @@ Module responsable for detecting anomalies in case studies of algal bloom occure
 
 ## Dependencies
 
-- Python >= 3.7.7 64-bit, <= 3.9.14 64-bit
+- Python >= 3.7.7 64-bit, < 3.10 64-bit
 - Google Earth Engine enabled account: see https://earthengine.google.com/
 
 
@@ -27,7 +27,15 @@ Before running the script and after installing the libraries, you must authentic
 earthengine authenticate
 ```
 
-In some versions of macOS, it might be necessary to run this command using sudo.
+In some versions of macOS, it might be necessary to run this command using `sudo`.
+
+## Docker image
+
+There is also a Docker image which provides this script with all necessary dependencies easy and ready. To use it, run:
+
+```bash
+docker run phmananias/abd:latest
+```
 
 ## Command line tool
 
@@ -70,8 +78,6 @@ Options:
 ```bash
 abd --lat_lon=-83.50124371805877,41.88435023280987,-83.07548096199702,41.65275061592091 --dates=2019-06-03 --name=erie --model=ocsvm --sensor=modis
 ```
-
-
 
 
 ## What are the results?
