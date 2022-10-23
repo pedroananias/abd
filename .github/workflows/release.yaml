@@ -17,8 +17,6 @@ jobs:
       - id: next_tag
         uses: paulhatch/semantic-version@v4.0.2
         with:
-          major_pattern: "(MAJOR UPDATE)"
-          minor_pattern: "(MINOR UPDATE)"
           tag_prefix: "v"
           format: "${major}.${minor}.${patch}"
 
