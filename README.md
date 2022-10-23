@@ -32,8 +32,8 @@ In some versions of macOS, it might be necessary to run this command using `sudo
 Additionally, make sure that folders `cache` and `output` have writing permissions:
 
 ```bash
-sudo chmod 777 /path/to/script/abd/cache
-sudo chmod 777 /path/to/script/abd/output
+chmod 777 /path/to/abd/cache
+chmod 777 /path/to/abd/output
 ```
 
 ## Docker image
@@ -92,7 +92,7 @@ abd --lat_lon=-83.50124371805877,41.88435023280987,-83.07548096199702,41.6527506
 The script will detect the occurrence of anomalies with a case study of algae blooming in the inserted study area and selected date. Therefore, a folder located in `output` is created and named based on the date and version of the script executed. Example: 
 
 ```bash
-/path/to/abd/output/20201122_123014[v=v0.26.0-erie,d=2019-06-03,t=180,m=ocsvm,s=modis]
+/path/to/abd/output/20221023_133118[v=v0.26.0-erie,d=2019-06-03,t=180,m=ocsvm,s=modis,attr=ndvi,fai]
 ```
 
 The following results are generated:
