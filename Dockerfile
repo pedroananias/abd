@@ -14,4 +14,4 @@ COPY src src
 RUN pip install --upgrade pip && \
     pip install -e '.'
 
-CMD abd --help
+ENTRYPOINT ["abd", "--help"]
