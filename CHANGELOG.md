@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 - Vertex AI Pipeline implementation
+- Use pathlib with all paths instead
+
+## [0.27.3] - 2022-10-23
+### Fixed
+- README.md and CHANGELOG -> .md
 
 ## [0.27.2] - 2022-10-23
 ### Fixed
@@ -78,6 +83,3 @@ from the time series images, adding the use of randomizedsearchcv
 ### Added
 - Mean and standard deviation were tested with STD, STD / 2 and STD + (STD / 2)
 in versions 21.0, 21.1 and 21.2 respectively
-
-[0.27.0]: https://github.com/pedroananias/abd/releases/tag/v0.27.0
-[0.26.0]: https://github.com/pedroananias/abd/releases/tag/v0.26.0
