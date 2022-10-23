@@ -11,7 +11,7 @@ RUN apt-get update \
 COPY CHANGELOG LICENSE README.md batch.sh setup.py ./
 COPY src src
 
-RUN pip install --upgrade pip wheel && \
-    pip install .
+RUN pip install --upgrade pip && \
+    pip install -e '.'
 
 CMD abd --help

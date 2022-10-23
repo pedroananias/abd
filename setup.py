@@ -22,7 +22,7 @@ setup(
                 "and machine learning.",
     long_description=(this_directory / "README.md").read_text(encoding="utf-8"),
     long_description_content_type="text/markdown",  # Optional (see note above)
-    python_requires=">=3.7.7,<=3.9.14",
+    python_requires=">=3.7.7,<=3.9",
     install_requires=[
         "oauth2client==4.1.3",
         "earthengine-api==0.1.328",
