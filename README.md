@@ -29,12 +29,19 @@ earthengine authenticate
 
 In some versions of macOS, it might be necessary to run this command using `sudo`.
 
+Additionally, make sure that folders `cache` and `output` have writing permissions:
+
+```bash
+sudo chmod 777 /path/to/script/abd/cache
+sudo chmod 777 /path/to/script/abd/output
+```
+
 ## Docker image
 
 There is also a Docker image which provides this script with all necessary dependencies easy and ready. To use it, run:
 
 ```bash
-docker run phmananias/abd:latest
+docker run -dit phmananias/abd:latest
 ```
 
 ## Command line tool
