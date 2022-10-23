@@ -6,9 +6,10 @@ WORKDIR /src
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends git \
-    && apt-get purge -y --auto-remove
+    && apt-get install -y gcc \
+    && apt-get purge -y --auto-remove \
 
-COPY CHANGELOG LICENSE README.md batch.sh setup.py ./
+COPY CHANGELOG.md README.md LICENSE batch.sh setup.py ./
 COPY src src
 
 RUN pip install --upgrade pip && \
