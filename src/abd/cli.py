@@ -82,6 +82,11 @@ exec((this_directory / "version.py").read_text(encoding="utf-8"))
     default=None,
     help="Allow CLOUD threshold customization by user",
 )
+@click.option(
+    "--output_folder",
+    default=None,
+    help="Specify desired results output folder",
+)
 def detection(
     lat_lon: str,
     dates: str,
@@ -97,6 +102,7 @@ def detection(
     attribute_doy: bool,
     roi: str,
     cloud_threshold: float,
+    output_folder: str
 ):
     try:
 
@@ -109,12 +115,19 @@ def detection(
         # ### Working directory
 
         # Data path
-        folderRoot = os.path.dirname(os.path.realpath(__file__)) + "/../../results"
-        if not os.path.exists(folderRoot):
-            os.mkdir(folderRoot)
+        if output_folder:
+            if not os.path.exists(output_folder):
+                os.mkdir(output_folder)
+            folderRoot = output_folder + "/results"
+            if not os.path.exists(folderRoot):
+                os.mkdir(folderRoot)
+        else:
+            folderRoot = os.path.dirname(os.path.realpath(__file__)) + "/../../results"
+            if not os.path.exists(folderRoot):
+                os.mkdir(folderRoot)
 
         # Images path
-        folderCache = os.path.dirname(os.path.realpath(__file__)) + "/../../cache"
+        folderCache = os.path.dirname(os.path.realpath(__file__)) + "/.cache"
         if not os.path.exists(folderCache):
             os.mkdir(folderCache)
 
