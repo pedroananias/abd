@@ -37,11 +37,11 @@ ee.Authenticate()
 
 In some versions of macOS, it might be necessary to run this command using `sudo`.
 
-Additionally, make sure that folders `cache` and `output` have writing permissions:
+Additionally, make sure that folders `cache` and `results` have writing permissions:
 
 ```bash
 chmod 777 /path/to/abd/cache
-chmod 777 /path/to/abd/output
+chmod 777 /path/to/abd/results
 ```
 
 ## Docker image
