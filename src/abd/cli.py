@@ -109,7 +109,7 @@ def detection(
         # ### Working directory
 
         # Data path
-        folderRoot = os.path.dirname(os.path.realpath(__file__)) + "/../../output"
+        folderRoot = os.path.dirname(os.path.realpath(__file__)) + "/../../results"
         if not os.path.exists(folderRoot):
             os.mkdir(folderRoot)
 
