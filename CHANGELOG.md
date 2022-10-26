@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Vertex AI Pipeline implementation
 - Use pathlib with all paths instead
 
+## [0.27.4] - 2022-10-23
+### Added
+- Jupyter-lab out-of-the-box from Docker image
+
+### Fixed
+- Dockerfile
+
 ## [0.27.3] - 2022-10-23
 ### Fixed
 - README.md and CHANGELOG -> .md
