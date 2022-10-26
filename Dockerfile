@@ -1,9 +1,5 @@
 FROM python:3.9-slim-bullseye
 
-ENV PYTHONDONTWRITEBYTECODE=1 PYTHONBUFFERED=1 PIP_NO_CACHE_DIR=1
-
-WORKDIR /src
-
 RUN apt-get update \
     && apt-get install -y --no-install-recommends git \
     && apt-get install -y gcc python3-dev \
@@ -13,12 +9,17 @@ RUN apt-get update \
 RUN curl https://sdk.cloud.google.com > install.sh \
     && bash install.sh --disable-prompts
 
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONBUFFERED=1 PIP_NO_CACHE_DIR=1
 ENV PATH $PATH:/root/google-cloud-sdk/bin
 
-COPY CHANGELOG.md LICENSE README.md batch.sh setup.py ./
+WORKDIR /opt/abd
+
+COPY CHANGELOG.md LICENSE README.md batch.sh setup.py sandbox.ipynb ./
 COPY src src
 
 RUN pip install --upgrade pip && \
     pip install -e '.'
 
-ENTRYPOINT ["/bin/bash"]
+EXPOSE 8888
+
+CMD jupyter-lab --ip 0.0.0.0 --no-browser --allow-root
