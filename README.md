@@ -91,6 +91,7 @@ Options:
   --roi TEXT                Select the GEE roi version used in the validation
                             process. E.g. users/pedroananias/roi
   --cloud_threshold TEXT    Allow CLOUD threshold customization by user
+  --output_folder           Specify desired results output folder
   --help                    Show this message and exit.
 
 ```
@@ -99,7 +100,7 @@ Options:
 ## How to execute the default script?
 
 ```bash
-abd --lat_lon=-83.50124371805877,41.88435023280987,-83.07548096199702,41.65275061592091 --dates=2019-06-03 --name=erie --model=ocsvm --sensor=modis
+abd --lat_lon=-83.50124371805877,41.88435023280987,-83.07548096199702,41.65275061592091 --dates=2019-06-03 --name=erie --model=ocsvm --sensor=modis --output_folder=abd
 ```
 
 
