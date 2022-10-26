@@ -96,6 +96,13 @@ Options:
 
 ```
 
+## Installing using PIP
+
+You can directly install the latest version of this script using the following command:
+
+```bash
+pip install git+https://github.com/pedroananias/abd.git@v0.28.1
+```
 
 ## How to execute the default script?
 
