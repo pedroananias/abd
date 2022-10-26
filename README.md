@@ -49,8 +49,16 @@ chmod 777 /path/to/abd/output
 There is also a Docker image which provides this script with all necessary dependencies easy and ready. To use it, run:
 
 ```bash
-docker run -dit phmananias/abd:latest
+docker run -p 8888:8888 phmananias/abd:latest
 ```
+
+or you can build it locally and then run it:
+```bash
+docker build -t abd:latest .
+docker run -p 8888:8888 abd:latest abd
+```
+
+
 
 ## Command line tool
 
@@ -124,5 +132,5 @@ When using the 'save_collection' function, if the script can not save images loc
 This script comes with a Jupyter Notebook sandbox example file. To open it, please run the command below inside the script's root directory:
 
 ```bash
-jupyter lab
+jupyter-lab
 ```
