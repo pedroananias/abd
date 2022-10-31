@@ -110,6 +110,7 @@ def detection(
         start_time = time.time()
 
         # Google Earth Engine API initialization
+        ee.Authenticate()
         ee.Initialize()
 
         # ### Working directory

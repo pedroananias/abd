@@ -21,7 +21,7 @@ To install this script and all its dependencies, execute the follow commands:
 
 ## Attention, before running this script:
 
-Before running the script and after installing the libraries, you must authenticate with the Google Earth Engine API using ONE of the following commands:
+Before running the script and after installing the libraries, you must authenticate with the Google Earth Engine API. However, the command line tool will automatically require you to do it so:
 
 ```bash
 # from local command line
@@ -101,7 +101,7 @@ Options:
 You can directly install the latest version of this script using the following command:
 
 ```bash
-pip install git+https://github.com/pedroananias/abd.git@v0.28.1
+pip install git+https://github.com/pedroananias/abd.git@latest
 ```
 
 ## How to execute the default script?
