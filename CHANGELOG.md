@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Vertex AI Pipeline implementation
 - Use pathlib with all paths instead
 
+## [0.28.2] - 2022-10-31
+### Fixed
+- Fix CLI tool for GEE auth
+- Fix Sandbox notebook
+
 ## [0.28.1] - 2022-10-26
 ### Fixed
 - Fix CLI tool output path
