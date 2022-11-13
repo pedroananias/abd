@@ -37,10 +37,9 @@ ee.Authenticate()
 
 In some versions of macOS, it might be necessary to run this command using `sudo`.
 
-Additionally, make sure that folders `cache` and `results` have writing permissions:
+Additionally, make sure that folder `results` (or whatever path you've defined) has writing permissions:
 
 ```bash
-chmod 777 /path/to/abd/cache
 chmod 777 /path/to/abd/results
 ```
 
@@ -49,13 +48,13 @@ chmod 777 /path/to/abd/results
 There is also a Docker image which provides this script with all necessary dependencies easy and ready. To use it, run:
 
 ```bash
-docker run -p 8888:8888 phmananias/abd:latest
+docker run -p 8888:8888 --name abf phmananias/abd:latest
 ```
 
 or you can build it locally and then run it:
 ```bash
 docker build -t abd:latest .
-docker run -p 8888:8888 abd:latest abd
+docker run -p 8888:8888 --name abf abd:latest
 ```
 
 

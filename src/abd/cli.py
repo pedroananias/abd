@@ -14,6 +14,8 @@ import click
 from datetime import datetime as dt
 from datetime import timedelta
 
+from ee import EEException
+
 # Extras src
 from abd.abd import Abd
 
@@ -110,8 +112,12 @@ def detection(
         start_time = time.time()
 
         # Google Earth Engine API initialization
-        ee.Authenticate()
-        ee.Initialize()
+        try:
+            ee.Initialize()
+        except (Exception, EEException) as e:
+            print(f"Google Earth Engine authentication/initialization error: {e}. "
+                  f"Please, manually log in GEE paltform with `earthengine authenticate`. "
+                  f"** See README.md file for the complete instructions **")
 
         # ### Working directory
 
