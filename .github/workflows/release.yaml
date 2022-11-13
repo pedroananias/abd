@@ -19,6 +19,8 @@ jobs:
         with:
           tag_prefix: "v"
           format: "${major}.${minor}.${patch}"
+          bump_each_commit: true
+
 
       - run: |
           TAG=${{ steps.next_tag.outputs.version_tag }}
