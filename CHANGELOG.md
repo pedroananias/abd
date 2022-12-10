@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 - Vertex AI Pipeline implementation
 - Use pathlib with all paths instead
-- 
+
 ## [0.28.9] - 2022-12-10
 ### Fixed
 - Minor fix to .gitignore
