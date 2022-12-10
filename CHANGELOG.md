@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.28.7] - 2022-12-10
 ### Fixed
 - Minor fix to .gitignore
+- Jupyter Notebook
 
 ## [0.28.6] - 2022-11-13
 ### Fixed
