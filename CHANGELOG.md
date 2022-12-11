@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Vertex AI Pipeline implementation
 - Use pathlib with all paths instead
 
+## [0.30.0] - 2022-12-11
+### Added
+- Multithreading for image download on GEE (improves script runtime in about 200%)
+- Loguru for debugging (final results now bring a debug.log file)
+
+### Fixed
+- CLI Tool boolean flags
+
 ## [0.28.9] - 2022-12-10
 ### Fixed
 - Minor fix to .gitignore

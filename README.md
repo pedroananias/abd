@@ -68,30 +68,48 @@ This module brings a default command line `adb` for you. To see available parame
 Usage: abd [OPTIONS]
 
 Options:
-  --lat_lon TEXT            Two diagnal points (Latitude 1, Longitude 1,
-                            Latitude 2, Longitude 2) of the study area
-  --dates TEXT              Comma-separated date to be applied the algorithm
-  --name TEXT               Place where to save generated files
-  --days_threshold INTEGER  Days threshold used to build the timeseries and
-                            training set: 90, 180 ou 365
-  --model TEXT              Select the desired model: ocsvm, rf, if or None
-                            for all
-  --sensor TEXT             Define the selected sensor where images will be
-                            downloaded from: landsat, sentinel, modis
-  --save_collection TEXT    Save collection images (tiff and png)
-  --save_train TEXT         Enable saving the training dataset (csv)
-  --force_cache TEXT        Force cache resetting to prevent image errors
-  --attributes TEXT         Define the attributes used in the modelling
-                            process
-  --outliers_zscore FLOAT   Define the Z-Score used in the median outlier
-                            removal threshold
-  --attribute_doy TEXT      Define if the doy attribute will be used in the
-                            modelling process
-  --roi TEXT                Select the GEE roi version used in the validation
-                            process. E.g. users/pedroananias/roi
-  --cloud_threshold TEXT    Allow CLOUD threshold customization by user
-  --output_folder           Specify desired results output folder
-  --help                    Show this message and exit.
+  --lat_lon TEXT                  Two diagonal points (Latitude 1, Longitude
+                                  1, Latitude 2, Longitude 2) of the study
+                                  area  [default: -83.50124371805877,41.884350
+                                  23280987,-83.07548096199702,41.6527506159209
+                                  1]
+  --dates TEXT                    Comma-separated date to be applied the
+                                  algorithm  [default:
+                                  2019-06-03,2019-07-01,2019-08-19,2019-09-24]
+  --name TEXT                     Place where to save generated files
+                                  [default: erie]
+  --days_threshold INTEGER        Days threshold used to build the timeseries
+                                  and training set: 90, 180 ou 365  [default:
+                                  180]
+  --model TEXT                    Select the desired model: ocsvm, rf, if or
+                                  None for all
+  --sensor TEXT                   Define the selected sensor where images will
+                                  be downloaded from: landsat, sentinel, modis
+                                  [default: modis]
+  --save_collection / --no-save_collection
+                                  Save collection images (tiff and png)
+                                  [default: no-save_collection]
+  --save_train / --no-save_train  Enable saving the training dataset (csv)
+                                  [default: no-save_train]
+  --force_cache / --no-force-cache
+                                  Force cache resetting to prevent image
+                                  errors  [default: no-force-cache]
+  --attributes TEXT               Define the attributes used in the modelling
+                                  process  [default: ndvi,fai]
+  --outliers_zscore FLOAT         Define the Z-Score used in the median
+                                  outlier removal threshold  [default: 3.0]
+  --attribute_doy / --no-attribute_doy
+                                  Define if the doy attribute will be used in
+                                  the modelling process  [default: no-
+                                  attribute_doy]
+  --roi TEXT                      Select the GEE roi version used in the
+                                  validation process. E.g.
+                                  users/pedroananias/roi
+  --cloud_threshold TEXT          Allow CLOUD threshold customization by user
+  --output_folder TEXT            Specify desired results output folder
+  --threads INTEGER               Specify the number of threads to run image
+                                  download from GEE  [default: 64]
+  --help                          Show this message and exit.
 
 ```
 

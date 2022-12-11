@@ -38,7 +38,8 @@ setup(
         "scikit-learn==1.1.2",
         "black==22.10.0",
         "click==8.1.3",
-        "jupyterlab==3.4.8"
+        "jupyterlab==3.4.8",
+        "loguru==0.6.0"
     ],
     extras_require={},
     entry_points={

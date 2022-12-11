@@ -27,6 +27,8 @@ import multiprocessing
 from io import BytesIO
 from datetime import datetime as dt
 from datetime import timedelta as td
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from loguru import logger
 
 # Matplotlib
 import matplotlib.pyplot as plt
@@ -104,6 +106,7 @@ class Abd:
     force_cache = None
     median_attributes = None
     outliers_zscore = None
+    threads = None
 
     # masks
     water_mask = None
@@ -191,6 +194,7 @@ class Abd:
         attributes: list = ["ndvi", "fai"],
         attribute_doy: bool = False,
         cloud_threshold: float = None,
+        threads: int = 64,
     ):
 
         # get sensor parameters
@@ -198,8 +202,7 @@ class Abd:
         self.scale = self.sensor_params["scale"] if not scale else scale
 
         # warning
-        print()
-        print("Selected sensor: " + self.sensor_params["name"])
+        logger.debug("Selected sensor: " + self.sensor_params["name"])
 
         # user defined parameters
         self.geometry = gee.get_geometry_from_lat_lon(lat_lon)
@@ -218,6 +221,7 @@ class Abd:
         self.convolve = convolve
         self.convolve_radius = convolve_radius
         self.outliers_zscore = outliers_zscore
+        self.threads = threads
 
         # check selected attributes
         if "cloud" not in attributes:
@@ -370,8 +374,7 @@ class Abd:
         )
 
         # check if requested date is good for processing
-        print()
-        print(
+        logger.debug(
             "Check if requested date is good for processing ["
             + str(self.date.strftime("%Y-%m-%d"))
             + "]..."
@@ -380,7 +383,7 @@ class Abd:
         for i, geometry in enumerate(self.splitted_geometry):
 
             # geometry
-            print(
+            logger.debug(
                 "Extracting geometry ("
                 + str(self.image_is_good)
                 + ") "
@@ -432,7 +435,7 @@ class Abd:
                 )
 
                 # warning
-                print(
+                logger.debug(
                     "Pixel and cloud score for geometry #"
                     + str(i + 1)
                     + ": "
@@ -448,13 +451,12 @@ class Abd:
 
         # check image result
         if self.image_is_good:
-            print("Ok, image is good for processing: " + str(self.image_is_good))
+            logger.debug("Ok, image is good for processing: " + str(self.image_is_good))
         else:
-            print("Error! Please, pick another date and try again.")
-        print()
+            logger.error("Error! Please, pick another date and try again.")
 
         # warning
-        print(
+        logger.debug(
             "Statistics: scale="
             + str(self.scale)
             + " meters, pixels="
@@ -558,7 +560,7 @@ class Abd:
         return image
 
     # extract image from collection
-    def extract_image_from_collection(self, date):
+    def extract_image_from_collection(self, date, return_date: bool = False):
         try:
             collection = self.collection.filter(
                 ee.Filter.date(
@@ -575,11 +577,16 @@ class Abd:
                 if int(collection.size().getInfo()) == 0:
                     return None
             image = ee.Image(collection.max())
-            return self.apply_water_mask(
+            image_response = self.apply_water_mask(
                 image.set("system:id", collection.first().get("system:id").getInfo()),
                 False,
             )
-        except Exception:
+            if return_date:
+                return date, image_response
+            else:
+                return image_response
+        except Exception as e:
+            logger.error(f"Image extraction error: {e}")
             return None
 
     # split images into tiles
@@ -649,8 +656,7 @@ class Abd:
     def apply_kmeans(self, df: pd.DataFrame):
 
         # jump to line
-        print()
-        print("Starting dimensionality reduction using K-Means...")
+        logger.debug("Starting dimensionality reduction using K-Means...")
 
         # dif attributes
         diff_attributes = self.attributes_extra + [
@@ -698,7 +704,7 @@ class Abd:
         df = df[df["group"].isin(n_groups)].drop(["group"], axis=1)
 
         # jump to line
-        print(
+        logger.debug(
             "Dimensionality reduction finished! Parametrization dataframe was reduced from "
             + str(total)
             + " -> "
@@ -755,7 +761,7 @@ class Abd:
     def extract_image_pixels(self, image: ee.Image, date):
 
         # warning
-        print("Processing date [" + str(date.strftime("%Y-%m-%d")) + "]...")
+        logger.debug("Processing date [" + str(date.strftime("%Y-%m-%d")) + "]...")
 
         # attributes
         lons_lats_attributes = None
@@ -797,7 +803,7 @@ class Abd:
                 for i, geometry in enumerate(self.splitted_geometry):
 
                     # geometry
-                    print(
+                    logger.debug(
                         "Extracting geometry ("
                         + str(len(lons_lats_attributes))
                         + ") "
@@ -856,7 +862,7 @@ class Abd:
                         )
 
                         # warning
-                        print(
+                        logger.debug(
                             "Pixel and cloud score for geometry #"
                             + str(i + 1)
                             + ": "
@@ -889,7 +895,9 @@ class Abd:
                 if len(lons_lats_attributes) == 0:
 
                     # warning
-                    print("Image is not good for processing and it was discarded!")
+                    logger.debug(
+                        "Image is not good for processing and it was discarded!"
+                    )
 
                     # Clear pixels, image is not good
                     lons_lats_attributes = None
@@ -910,7 +918,7 @@ class Abd:
             except Exception:
 
                 # warning
-                print(
+                logger.debug(
                     "Error while extracting pixels from image "
                     + str(date.strftime("%Y-%m-%d"))
                     + ": "
@@ -962,7 +970,7 @@ class Abd:
             df_timeseries["pixel"] = range(0, len(df_timeseries))
 
             # show example of time series
-            print(df_timeseries.head())
+            logger.debug(df_timeseries.head())
 
             # gabagge collect
             del lons_lats_attributes, extra_attributes
@@ -975,7 +983,7 @@ class Abd:
         except Exception:
 
             # warning
-            print(
+            logger.debug(
                 "Error while extracting pixels from image "
                 + str(date.strftime("%Y-%m-%d"))
                 + ": "
@@ -1032,8 +1040,7 @@ class Abd:
 
         # warning
         if self.image_is_good:
-            print()
-            print("Starting time series processing ...")
+            logger.debug("Starting time series processing ...")
 
             # attributes
             df_timeseries = pd.DataFrame(columns=self.df_columns)
@@ -1045,11 +1052,11 @@ class Abd:
                 cache_files = self.get_cache_files(date=self.date)
 
                 # warning
-                print("Trying to extract it from the cache...")
+                logger.debug("Trying to extract it from the cache...")
 
                 # warning 2
                 if self.force_cache or force_cache:
-                    print(
+                    logger.error(
                         "User selected option 'force_cache'! Forcing building of time series..."
                     )
                     raise Exception()
@@ -1061,27 +1068,44 @@ class Abd:
             except Exception:
 
                 # warning
-                print(
+                logger.error(
                     "Error trying to get it from cache: either doesn't exist or is corrupted! Creating it again..."
                 )
 
-                # process all dates in time series
-                for date in self.dates_timeseries_interval:
-
-                    # extract pixels from image
-                    # check if is good image (with pixels)
-                    try:
-                        df_timeseries_ = self.extract_image_pixels(
-                            image=self.extract_image_from_collection(date=date),
-                            date=date,
-                        )
-                        if df_timeseries_.size > 0:
-                            df_timeseries = self.merge_timeseries(
-                                df_list=[df_timeseries, df_timeseries_]
+                # extract images from collections
+                futures_images = []
+                futures = []
+                with ThreadPoolExecutor(max_workers=self.threads) as executor:
+                    for date_ in self.dates_timeseries_interval:
+                        futures_images.append(
+                            executor.submit(
+                                self.extract_image_from_collection,
+                                date=date_,
+                                return_date=True,
                             )
-                        gc.collect()
-                    except Exception:
-                        pass
+                        )
+
+                    # process images extracted
+                    for future_image in as_completed(futures_images):
+                        if future_image.result():
+                            date_, image = future_image.result()
+                            futures.append(
+                                executor.submit(
+                                    self.extract_image_pixels, image=image, date=date_
+                                )
+                            )
+
+                    # process images result when completed
+                    for future in as_completed(futures):
+                        try:
+                            df_timeseries_ = future.result()
+                            if df_timeseries_.size > 0:
+                                df_timeseries = self.merge_timeseries(
+                                    df_list=[df_timeseries, df_timeseries_]
+                                )
+                                gc.collect()
+                        except Exception:
+                            pass
 
                 # get only good dates
                 # fix dataframe index
@@ -1161,25 +1185,23 @@ class Abd:
             gc.collect()
 
             # warning
-            print("finished!")
+            logger.debug("finished!")
 
     # process training dataset
     def process_training_data(self, df: pd.DataFrame):
 
         # warning
         if self.image_is_good:
-            print()
-            print("Processing training data...")
+            logger.debug("Processing training data...")
 
             # attributes
             attributes = [a for a in self.attributes if a != "cloud"]
 
             # show statistics
-            print(df.describe())
+            logger.debug(df.describe())
 
             # warning
-            print()
-            print("Removing median trend...")
+            logger.debug("Removing median trend...")
 
             # remove median trend
             for attribute in attributes:
@@ -1191,14 +1213,13 @@ class Abd:
             self.df_image = df[df["date"] == self.date.strftime("%Y-%m-%d")]
 
             # show statistics
-            print(self.df_train.describe())
+            logger.debug(self.df_train.describe())
 
             # check if it has to remove outliers
             if self.remove_outliers:
 
                 # warning
-                print()
-                print("Removing outliers on training dataframe...")
+                logger.debug("Removing outliers on training dataframe...")
 
                 # remove outliers (min than 3 stddev)
                 self.df_train = self.df_train[
@@ -1211,11 +1232,10 @@ class Abd:
                 ]
 
                 # show statistics
-                print(self.df_train.describe())
+                logger.debug(self.df_train.describe())
 
             # warning
-            print()
-            print("Median modelling...")
+            logger.debug("Median modelling...")
 
             # median modeling
             df_queries = []
@@ -1248,30 +1268,28 @@ class Abd:
             ] = 0
 
             # show statistics
-            print(self.df_train.describe())
+            logger.debug(self.df_train.describe())
 
             # check if it should apply aggregation algorithm to reduce dimensinality
             if self.reduce_dimensionality:
                 self.df_gridsearch = self.apply_kmeans(df=self.df_gridsearch)
 
             # warning
-            print()
-            print(
+            logger.debug(
                 "Total of "
                 + str(len(self.df_train))
                 + " and "
                 + str(len(self.df_gridsearch))
                 + " pixels for training and parametrization dataframes, respectively!"
             )
-            print("finished!")
+            logger.debug("finished!")
 
     # start training process
     def train(self):
 
         # jump line
         if self.image_is_good:
-            print()
-            print("Starting the training process...")
+            logger.debug("Starting the training process...")
 
             # attributes
             attributes = self.attributes_extra + [
@@ -1304,8 +1322,7 @@ class Abd:
                 )
 
                 # jump to line
-                print()
-                print(
+                logger.debug(
                     "Creating the OneClass Support Vector Machines with "
                     "RandomizedSearchCV parameterization model..."
                 )
@@ -1331,7 +1348,7 @@ class Abd:
                 ]
 
                 # warning
-                print(
+                logger.debug(
                     "Starting RandomizedSearch ("
                     + str(len(X_gridsearch_))
                     + " pixels) parameters selection..."
@@ -1394,8 +1411,7 @@ class Abd:
                 )
 
                 # warning
-                print()
-                print("Evaluating the " + str(str_model) + " model...")
+                logger.debug("Evaluating the " + str(str_model) + " model...")
 
                 # get predictions on test set
                 y_true, y_pred = y_test, self.decode_ocsvm_labels(ocsvm.predict(X_test))
@@ -1404,13 +1420,13 @@ class Abd:
                 )
 
                 # reports
-                print(
+                logger.debug(
                     "Report for the " + str(str_model) + " model: " + measures["string"]
                 )
-                print(metrics.classification_report(y_true, y_pred))
+                logger.debug(metrics.classification_report(y_true, y_pred))
 
                 # warning
-                print("finished!")
+                logger.debug("finished!")
 
             ########################################################################
 
@@ -1430,8 +1446,7 @@ class Abd:
                 )
 
                 # jump line
-                print()
-                print(
+                logger.debug(
                     "Creating the Random Forest Classifier with RandomizedSearchCV parameterization model..."
                 )
 
@@ -1452,7 +1467,7 @@ class Abd:
                 }
 
                 # warning
-                print(
+                logger.debug(
                     "Starting RandomizedSearch ("
                     + str(len(X_gridsearch_))
                     + " pixels) parameters selection..."
@@ -1512,8 +1527,7 @@ class Abd:
                 self.classifiers[str_model] = rf
 
                 # warning
-                print()
-                print("Evaluating the " + str(str_model) + " model...")
+                logger.debug("Evaluating the " + str(str_model) + " model...")
 
                 # get predictions on test set
                 y_true, y_pred = y_test, rf.predict(X_test)
@@ -1522,13 +1536,13 @@ class Abd:
                 )
 
                 # reports
-                print(
+                logger.debug(
                     "Report for the " + str(str_model) + " model: " + measures["string"]
                 )
-                print(metrics.classification_report(y_true, y_pred))
+                logger.debug(metrics.classification_report(y_true, y_pred))
 
                 # warning
-                print("finished!")
+                logger.debug("finished!")
 
             ########################################################################
 
@@ -1548,8 +1562,7 @@ class Abd:
                 )
 
                 # jump to line
-                print()
-                print(
+                logger.debug(
                     "Creating the Isolation Forest Classifier with RandomizedSearchCV "
                     "parameterization model..."
                 )
@@ -1577,7 +1590,7 @@ class Abd:
                 }
 
                 # warning
-                print(
+                logger.debug(
                     "Starting RandomizedSearch ("
                     + str(len(X_gridsearch_))
                     + " pixels) parameters selection..."
@@ -1635,8 +1648,7 @@ class Abd:
                 self.classifiers[str_model] = iff
 
                 # warning
-                print()
-                print("Evaluating the " + str(str_model) + " model...")
+                logger.debug("Evaluating the " + str(str_model) + " model...")
 
                 # get predictions on test set
                 y_true, y_pred = y_test, self.decode_if_labels(iff.predict(X_test))
@@ -1645,13 +1657,13 @@ class Abd:
                 )
 
                 # reports
-                print(
+                logger.debug(
                     "Report for the " + str(str_model) + " model: " + measures["string"]
                 )
-                print(metrics.classification_report(y_true, y_pred))
+                logger.debug(metrics.classification_report(y_true, y_pred))
 
                 # warning
-                print("finished!")
+                logger.debug("finished!")
 
             ########################################################################
 
@@ -1661,8 +1673,7 @@ class Abd:
 
         # warning
         if isinstance(self.df_image, pd.DataFrame) and not self.df_image.empty:
-            print()
-            print(
+            logger.debug(
                 "Starting "
                 + self.date.strftime("%Y-%m-%d")
                 + " image detection process ("
@@ -1676,7 +1687,7 @@ class Abd:
             ]
 
             # show statistics
-            print(self.df_image.describe())
+            logger.debug(self.df_image.describe())
 
             # data
             X = self.scaler.transform(
@@ -1695,15 +1706,14 @@ class Abd:
                 )
 
             # warning
-            print("finished!")
+            logger.debug("finished!")
 
     # save geojson of pixels classified and spectral indices
     def save_geojsons(self, folder: str):
 
         # warning
         if isinstance(self.df_image, pd.DataFrame) and not self.df_image.empty:
-            print()
-            print("Saving GeoJSONs to folder '" + folder + "'...")
+            logger.debug("Saving GeoJSONs to folder '" + folder + "'...")
 
             # attributes
             attributes = [a for a in self.attributes if a != "cloud"]
@@ -1789,15 +1799,14 @@ class Abd:
                 f.close()
 
             # warning
-            print("finished!")
+            logger.debug("finished!")
 
     # save detection plot
     def save_detection_plot(self, path: str):
 
         # warning
         if isinstance(self.df_image, pd.DataFrame) and not self.df_image.empty:
-            print()
-            print("Creating detection plot to file '" + path + "'...")
+            logger.debug("Creating detection plot to file '" + path + "'...")
 
             # attributes
             attributes = [a for a in self.attributes if a != "cloud"]
@@ -2034,14 +2043,13 @@ class Abd:
             fig.savefig(path, bbox_inches="tight")
 
             # warning
-            print("finished!")
+            logger.debug("finished!")
 
     # save timeseries plot
     def save_timeseries_plot(self, df: pd.DataFrame, path: str):
 
         # warning
-        print()
-        print("Creating time series plot to file '" + path + "'...")
+        logger.debug("Creating time series plot to file '" + path + "'...")
 
         # attributes
         attributes = [a for a in self.attributes if a != "cloud"]
@@ -2071,7 +2079,7 @@ class Abd:
         fig.savefig(path)
 
         # warning
-        print("finished!")
+        logger.debug("finished!")
 
     # validate imagem using a ROI from GEE
     # GEE Code Console: https://code.earthengine.google.com
@@ -2081,8 +2089,7 @@ class Abd:
 
         # warning
         if isinstance(self.df_image, pd.DataFrame) and not self.df_image.empty:
-            print()
-            print(
+            logger.debug(
                 "Validating classifier using a ROI from GEE web plataform "
                 "(https://code.earthengine.google.com)..."
             )
@@ -2096,7 +2103,7 @@ class Abd:
 
                 # extract FeatureCollection from roi selected through the GEE
                 # Code Console and process image
-                print(
+                logger.debug(
                     "Processing ROI '"
                     + path
                     + "/"
@@ -2149,7 +2156,7 @@ class Abd:
 
                 # error: no data in ROI or it does not exist
                 except Exception:
-                    print(
+                    logger.error(
                         "Error while extracting roi pixels: "
                         + str(traceback.format_exc())
                     )
@@ -2178,8 +2185,7 @@ class Abd:
             for i, model in enumerate(self.classifiers):
 
                 # warning
-                print()
-                print("Evaluating the " + str(model) + " model...")
+                logger.debug("Evaluating the " + str(model) + " model...")
 
                 # start counter
                 start_time = time.time()
@@ -2209,12 +2215,12 @@ class Abd:
 
                 # reports
                 try:
-                    print(
+                    logger.debug(
                         "Report for the " + str(model) + " model: " + measures["string"]
                     )
-                    print(metrics.classification_report(y_true, y_pred))
+                    logger.debug(metrics.classification_report(y_true, y_pred))
                 except Exception:
-                    print("Error while extracting classification report!")
+                    logger.error("Error while extracting classification report!")
 
                 # add results
                 dict_results.append(
@@ -2264,8 +2270,7 @@ class Abd:
                 if indice in self.attributes:
 
                     # warning
-                    print()
-                    print("Evaluating the " + str(indice).upper() + " indice...")
+                    logger.debug("Evaluating the " + str(indice).upper() + " indice...")
 
                     # start counter
                     start_time = time.time()
@@ -2304,15 +2309,15 @@ class Abd:
 
                     # reports
                     try:
-                        print(
+                        logger.debug(
                             "Report for the "
                             + str(indice)
                             + " indice: "
                             + measures["string"]
                         )
-                        print(metrics.classification_report(y_true, y_pred))
+                        logger.debug(metrics.classification_report(y_true, y_pred))
                     except Exception:
-                        print("Error while extracting classificatio report!")
+                        logger.error("Error while extracting classification report!")
 
                     # add results
                     dict_results.append(
@@ -2358,14 +2363,13 @@ class Abd:
             )
 
             # warning
-            print("finished!")
+            logger.debug("finished!")
 
     # save occurrences plot
     def save_occurrences_plot(self, df: pd.DataFrame, path: str):
 
         # warning
-        print()
-        print("Saving occurrences plot to image '" + path + "'...")
+        logger.debug("Saving occurrences plot to image '" + path + "'...")
 
         # years list
         years_list = df.groupby("year")["year"].agg("mean").values
@@ -2449,17 +2453,13 @@ class Abd:
         fig.savefig(path, bbox_inches="tight")
 
         # warning
-        print("finished!")
+        logger.debug("finished!")
 
     # save occurrences geojsons
     def save_occurrences_geojson(self, df: pd.DataFrame, path: str):
 
         # warning
-        print()
-        print("Saving occurrences geojsons to file '" + path + "'...")
-
-        # years list
-        years_list = df.groupby("year")["year"].agg("mean").values
+        logger.debug("Saving occurrences geojsons to file '" + path + "'...")
 
         # fillna
         df.fillna(0, inplace=True)
@@ -2487,7 +2487,7 @@ class Abd:
         f.close()
 
         # warning
-        print("finished!")
+        logger.debug("finished!")
 
     # save a image to file
     def save_image_png(
@@ -2499,8 +2499,7 @@ class Abd:
     ):
 
         # warning
-        print()
-        print("Saving image to file '" + path + "'...")
+        logger.debug("Saving image to file '" + path + "'...")
 
         # get sensor name
         image_collection = self.collection.filter(
@@ -2551,10 +2550,10 @@ class Abd:
             )
             imageIO.save(path)
         except Exception:
-            print("Error while saving png image: " + str(traceback.format_exc()))
+            logger.debug("Error while saving png image: " + str(traceback.format_exc()))
 
         # warning
-        print("finished!")
+        logger.debug("finished!")
 
     # save a image to file
     def save_image_tiff(
@@ -2567,8 +2566,7 @@ class Abd:
     ):
 
         # warning
-        print()
-        print(
+        logger.debug(
             "Saving image in tiff to file '"
             + path
             + "' (first try, based on image size) or to your Google Drive at folder '"
@@ -2616,7 +2614,7 @@ class Abd:
 
         # First try, save in local folder
         try:
-            print(
+            logger.debug(
                 "Trying to save "
                 + date.strftime("%Y-%m-%d")
                 + " GeoTIFF to local folder..."
@@ -2631,11 +2629,11 @@ class Abd:
             open(path, "wb").write(
                 requests.get(image_download_url, allow_redirects=True).content
             )
-            print("finished!")
+            logger.debug("finished!")
 
         # Second try, save in Google Drive
         except Exception:
-            print(
+            logger.error(
                 "Error! It was not possible to save GeoTIFF localy. "
                 "Trying to save it in Google Drive..."
             )
@@ -2647,10 +2645,10 @@ class Abd:
                     region=self.geometry,
                 )
                 task.start()
-                print(task.status())
+                logger.debug(task.status())
 
         # warning
-        print("finished!")
+        logger.debug("finished!")
 
     # save a collection in tiff (zip) to folder (time series)
     def save_collection_tiff(self, folder: str, folderName: str):
@@ -2659,8 +2657,7 @@ class Abd:
         folderName = "abd_" + str(folderName) + ".tiff"
 
         # warning
-        print()
-        print(
+        logger.debug(
             "Saving image collection in tiff to folder '"
             + str(folder)
             + "' (first try, based on image size) or to your Google Drive at folder '"
@@ -2685,14 +2682,13 @@ class Abd:
             )
 
         # warning
-        print("finished!")
+        logger.debug("finished!")
 
     # save a collection in png to folder (time series)
     def save_collection_png(self, folder: str):
 
         # warning
-        print()
-        print("Saving image collection in png to folder '" + folder + "'...")
+        logger.debug("Saving image collection in png to folder '" + folder + "'...")
 
         # check if folder exists
         if not os.path.exists(folder):
@@ -2722,18 +2718,17 @@ class Abd:
                 )
 
         # warning
-        print("finished!")
+        logger.debug("finished!")
 
     # save a dataset to file
     def save_dataset(self, df: pd.DataFrame, path: str):
 
         # warning
         if not df is None and not df.empty:
-            print()
-            print("Saving dataset to file '" + path + "'...")
+            logger.debug("Saving dataset to file '" + path + "'...")
 
             # saving dataset to file
             df.to_csv(r"" + path)
 
             # warning
-            print("finished!")
+            logger.debug("finished!")

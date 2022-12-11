@@ -1,4 +1,6 @@
 # Main
+import sys
+
 import ee
 import pandas as pd
 import numpy as np
@@ -9,6 +11,7 @@ import traceback
 import gc
 from pathlib import Path
 import click
+from loguru import logger
 
 # Sub
 from datetime import datetime as dt
@@ -27,11 +30,11 @@ __version__ = ""
 exec((this_directory / "version.py").read_text(encoding="utf-8"))
 
 
-@click.command()
+@click.command("detection", context_settings={"show_default": True})
 @click.option(
     "--lat_lon",
     default="-83.50124371805877,41.88435023280987,-83.07548096199702,41.65275061592091",
-    help="Two diagnal points (Latitude 1, Longitude 1, Latitude 2, Longitude 2) "
+    help="Two diagonal points (Latitude 1, Longitude 1, Latitude 2, Longitude 2) "
     "of the study area",
 )
 @click.option(
@@ -56,9 +59,21 @@ exec((this_directory / "version.py").read_text(encoding="utf-8"))
     help="Define the selected sensor where images will be downloaded from: "
     "landsat, sentinel, modis",
 )
-@click.option("--save_collection", help="Save collection images (tiff and png)")
-@click.option("--save_train", help="Enable saving the training dataset (csv)")
-@click.option("--force_cache", help="Force cache resetting to prevent image errors")
+@click.option(
+    "--save_collection/--no-save_collection",
+    help="Save collection images (tiff and png)",
+    default=False,
+)
+@click.option(
+    "--save_train/--no-save_train",
+    help="Enable saving the training dataset (csv)",
+    default=False,
+)
+@click.option(
+    "--force_cache/--no-force-cache",
+    help="Force cache resetting to prevent image errors",
+    default=False,
+)
 @click.option(
     "--attributes",
     default="ndvi,fai",
@@ -70,8 +85,9 @@ exec((this_directory / "version.py").read_text(encoding="utf-8"))
     help="Define the Z-Score used in the median outlier removal threshold",
 )
 @click.option(
-    "--attribute_doy",
+    "--attribute_doy/--no-attribute_doy",
     help="Define if the doy attribute will be used in the modelling process",
+    default=False,
 )
 @click.option(
     "--roi",
@@ -86,8 +102,13 @@ exec((this_directory / "version.py").read_text(encoding="utf-8"))
 )
 @click.option(
     "--output_folder",
-    default=None,
+    default="",
     help="Specify desired results output folder",
+)
+@click.option(
+    "--threads",
+    default=64,
+    help="Specify the number of threads to run image download from GEE",
 )
 def detection(
     lat_lon: str,
@@ -104,7 +125,8 @@ def detection(
     attribute_doy: bool,
     roi: str,
     cloud_threshold: float,
-    output_folder: str
+    output_folder: str,
+    threads: int,
 ):
     try:
 
@@ -115,9 +137,11 @@ def detection(
         try:
             ee.Initialize()
         except (Exception, EEException) as e:
-            print(f"Google Earth Engine authentication/initialization error: {e}. "
-                  f"Please, manually log in GEE paltform with `earthengine authenticate`. "
-                  f"** See README.md file for the complete instructions **")
+            logger.debug(
+                f"Google Earth Engine authentication/initialization error: {e}. "
+                f"Please, manually log in GEE paltform with `earthengine authenticate`. "
+                f"** See README.md file for the complete instructions **"
+            )
 
         # ### Working directory
 
@@ -180,6 +204,15 @@ def detection(
             if not os.path.exists(folder):
                 os.mkdir(folder)
 
+            # enable logging file
+            logger.add(
+                sys.stderr,
+                format="{time} {level} {message}",
+                filter="my_module",
+                level="DEBUG",
+            )
+            logger.add(folder + "/debug.log", level="DEBUG")
+
             # create ABD algorithm
             algorithm = Abd(
                 lat_lon=lat_lon,
@@ -200,6 +233,7 @@ def detection(
                 attributes=attributes.split(","),
                 attribute_doy=attribute_doy,
                 cloud_threshold=cloud_threshold,
+                threads=threads,
             )
 
             # preprocessing
@@ -437,18 +471,15 @@ def detection(
             "***** Script execution completed successfully (-- %s seconds --) *****"
             % script_time_all
         )
-        print()
-        print(debug)
+        logger.debug(debug)
 
     except Exception:
 
         # ### Script execution error warning
 
         # Execution
-        print()
-        print()
         debug = "***** Error on script execution: " + str(traceback.format_exc())
-        print(debug)
+        logger.error(debug)
 
         # Removes the folder created initially with the result of execution
         script_time_all = time.time() - start_time
@@ -456,8 +487,8 @@ def detection(
             "***** Script execution could not be completed (-- %s seconds --) *****"
             % script_time_all
         )
-        print(debug)
+        logger.error(debug)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     detection()
