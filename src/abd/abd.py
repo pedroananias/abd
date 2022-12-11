@@ -895,7 +895,7 @@ class Abd:
                 if len(lons_lats_attributes) == 0:
 
                     # warning
-                    logger.debug(
+                    logger.warning(
                         "Image is not good for processing and it was discarded!"
                     )
 
@@ -918,7 +918,7 @@ class Abd:
             except Exception:
 
                 # warning
-                logger.debug(
+                logger.error(
                     "Error while extracting pixels from image "
                     + str(date.strftime("%Y-%m-%d"))
                     + ": "
@@ -983,7 +983,7 @@ class Abd:
         except Exception:
 
             # warning
-            logger.debug(
+            logger.error(
                 "Error while extracting pixels from image "
                 + str(date.strftime("%Y-%m-%d"))
                 + ": "
@@ -2550,7 +2550,7 @@ class Abd:
             )
             imageIO.save(path)
         except Exception:
-            logger.debug("Error while saving png image: " + str(traceback.format_exc()))
+            logger.error("Error while saving png image: " + str(traceback.format_exc()))
 
         # warning
         logger.debug("finished!")
