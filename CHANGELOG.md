@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Loguru for debugging (final results now bring a debug.log file)
 
 ### Fixed
-- CLI Tool boolean flags
+- CLI Tool boolean flags 
 
 ## [0.28.9] - 2022-12-10
 ### Fixed
