@@ -208,6 +208,7 @@ def detection(
             logger.add(
                 sys.stderr,
                 format="{time} {level} {message}",
+                filter="my_module",
                 level="DEBUG",
             )
             logger.add(folder + "/debug.log", level="DEBUG")

@@ -61,7 +61,7 @@ docker run -p 8888:8888 --name abd abd:latest
 
 ## Command line tool
 
-This module brings a default command line `adb` for you. To see available parameters, please run:
+This module brings a default command line `abd` for you. To see available parameters, please run:
 
 ```bash
 > abd --help
